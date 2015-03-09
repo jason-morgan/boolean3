@@ -3,7 +3,7 @@ boolean3
 
 boolean3 represents a substantial re-write of the original boolean package
 developed by Bear Braumoeller, Ben Goodrich, and Jacob Kline. This version was
-developed by Jason Morhan under the direction of Bear Braumoeller and with
+developed by Jason Morgan under the direction of Bear Braumoeller and with
 support from The Ohio State University's College of Social and Behavioral
 Sciences.
 
