@@ -26,7 +26,7 @@
 ##' @import stats rgenoud numDeriv optimx parallel mvtnorm rlecuyer lattice
 NULL
 
-##' 
+##'
 ##' Boolean binary response models are a family of partial-observability binary
 ##' response models designed to permit researchers to model causal complexity,
 ##' or multiple causal ``paths'' to a given outcome.
@@ -49,16 +49,16 @@ NULL
 ##' latent dependent variables can be included in both paths. Any combination of
 ##' any number of ANDs and ORs can be modeled, though the procedure becomes
 ##' exponentially more data-intensive as the number of interactions increases.
-##' 
+##'
 ##' \tabular{ll}{
 ##' Package: \tab boolean3 \cr
 ##' Type: \tab Package\cr
-##' Version: \tab 3.1.6\cr
-##' Date: \tab 2014-11-15\cr
+##' Version: \tab 3.1.7\cr
+##' Date: \tab 2015-09-24\cr
 ##' License: \tab GPL-3 \cr
 ##' LazyLoad: \tab yes\cr
 ##' }
-##' 
+##'
 ##' @name boolean3-package
 ##' @aliases boolean3
 ##' @docType package
@@ -107,99 +107,99 @@ NULL
 ##' Df[,1] <- y.OR
 ##' Df[,2] <- y.AND
 ##' names(Df) <- c("y.OR", "y.AND", "x1", "x2", "x3", "x4", "x5")
-##' 
+##'
 ##' ## Before estimating, boolean models need to be specified using the
 ##' ## boolprep function.
-##' 
+##'
 ##' ## OR model, specified to use a probit link for each causal path. This
 ##' ## matches the data generating process above.
 ##' mod.OR <- boolprep(y.OR ~ (a | b), a ~ x1 + x2 + x3, b ~ x4 + x5,
 ##'                    data = Df, family=list(binomial("probit")))
-##' 
-##' ## IF you really want to, it's also possible to specify a different 
-##' ## link function for each causal path. These should be in the same 
+##'
+##' ## IF you really want to, it's also possible to specify a different
+##' ## link function for each causal path. These should be in the same
 ##' ## order as specified in the model formula.
 ##' mod.OR2 <- boolprep(y.OR ~ (a | b), a ~ x1 + x2 + x3, b ~ x4 + x5,
 ##'                     data = Df, family=list(binomial("probit"),
 ##'                                    binomial("logit")))
-##' 
+##'
 ##' ## Fit the prepared model using the nlminb optimizer (the default).
 ##' (fit.OR <- boolean(mod.OR, method="nlminb", control=list(trace=1)))
-##' 
-##' ## Multiple optimizers can be specified in a single call to boolean. 
+##'
+##' ## Multiple optimizers can be specified in a single call to boolean.
 ##' ## Here we fit with the nlm and nlminb optimizers.
 ##' (fit1.OR <- boolean(mod.OR, method=c("nlm", "nlminb")))
-##' 
-##' ## Re-fit, with BFGS and a higher maximum number of iterations. All 
-##' ## of the options that go along with nlm(), optim(), and genoud() should 
+##'
+##' ## Re-fit, with BFGS and a higher maximum number of iterations. All
+##' ## of the options that go along with nlm(), optim(), and genoud() should
 ##' ## be transparently passable through boolean.
 ##' (fit2.OR <- boolean(mod.OR, method="BFGS", control = list(maxit = 500)))
-##' 
+##'
 ##' ## Induce a convergence warning message.
 ##' (fit3.OR <- boolean(mod.OR, method="BFGS", control = list(maxit = 5)))
 ##'
 ##' \dontrun{
-##' ## Now estimate model with genoud, a genetic optimizer. This has the 
+##' ## Now estimate model with genoud, a genetic optimizer. This has the
 ##' ## capability of using multiple processors via parallel.
 ##' (fit6.OR <- boolean(mod.OR, method="genoud",
 ##'                     cluster=c("localhost", "localhost"),
 ##'                     print.level=2))
-##' 
+##'
 ##' ## The default SANN optimizer is also available.
 ##' (fit7.OR <- boolean(mod.OR, method="SANN"))
 ##' }
-##' 
+##'
 ##' ## The fit is stored as "model.fit", within the boolean object.
 ##' str(fit.OR$model.fit)
-##' 
-##' ## Create a summary object, saving and printing it. Then take a look at 
+##'
+##' ## Create a summary object, saving and printing it. Then take a look at
 ##' ## the objects stored in the summary object.
 ##' (smry <- summary(fit.OR))
 ##' str(smry)
-##' 
+##'
 ##' ## Extract log-likelihood and coefficient vector.
 ##' logLik(fit.OR)
 ##' coef(fit.OR)
-##' 
+##'
 ##' \dontrun{
-##' ## Display the contours of the likelihood given a change the value of 
-##' ## the coefficients. Despite the function name, these are not true 
+##' ## Display the contours of the likelihood given a change the value of
+##' ## the coefficients. Despite the function name, these are not true
 ##' ## profile likelihoods as they hold all other coefficients fixed at
 ##' ## their MLE.
 ##' (prof <- boolprof(fit.OR))
-##' 
+##'
 ##' ## Extract the plots for x1_a and x4_b.
 ##' plot(prof, y = c("x1_a", "x4_b"))
 ##' plot(prof, y = c(1, 3), scales = list(y = list(relation = "free")))
-##' 
-##' ## You can also use variable or index matching with boolprof to select 
+##'
+##' ## You can also use variable or index matching with boolprof to select
 ##' ## particular covariates of interest.
 ##' boolprof(fit.OR, vars = c(1, 3))
 ##' boolprof(fit.OR, vars = c("x1_a", "x4_b"))
-##' 
+##'
 ##' ## Plots of predicted probabilities are available through boolprob.
 ##' ## With boolprob, either vars or newdata *must* be specified.
 ##' boolprob(fit.OR, vars = c("x1_a", "x4_b"))
 ##' boolprob(fit.OR, vars = c(2, 3, 4, 6))
-##' 
-##' ## Specifying conf.int = TRUE produces simulated confidence intervals. 
+##'
+##' ## Specifying conf.int = TRUE produces simulated confidence intervals.
 ##' ## The number of samples to pull from the distribution of the estimated
 ##' ## coefficients is controlled by n; n=100 is default. This can take a
 ##' ## while.
 ##' (prob <- boolprob(fit.OR, vars = c(2, 3, 4, 6), n = 1000,
 ##'                   conf.int = TRUE))
-##' 
+##'
 ##' ## Choose a different method estimate upon which to base the estimates.
 ##' (prob <- boolprob(fit1.OR, method="nlm", vars=c(2, 3, 4, 6), n=1000,
 ##'                   conf.int=TRUE))
-##' 
-##' ## As with the other components of the model, you can extract the 
+##'
+##' ## As with the other components of the model, you can extract the
 ##' ## predicted probabilities.
 ##' str(prob)
 ##' prob$est
 ##'
-##' ## Bootstrapping is also possible, and is the recommended method of 
-##' ## making inferences. The boolbool function uses a simple sampling scheme: 
+##' ## Bootstrapping is also possible, and is the recommended method of
+##' ## making inferences. The boolbool function uses a simple sampling scheme:
 ##' ## it resamples repeatedly from the provided data.frame. More the complex
 ##' ## data structures with, for example, clustering, need to be dealt with
 ##' ## manually.
@@ -207,7 +207,6 @@ NULL
 ##'
 ##' ## boolboot supports bootstrapping across multiple processors.
 ##' (bs <- boolboot(fit, n=100, cluster=c("localhost", "localhost")))
-##' 
+##'
 ##' }
 NULL
-

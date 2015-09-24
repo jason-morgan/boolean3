@@ -52,31 +52,39 @@
 ##' and \code{\link{optimx}} and \code{\link{optim}} for estimation methods.
 ##' @export
 boolboot <- function(obj, n=100, method="nlminb", cluster=NULL, ...)
-{    
+{
     if (!inherits(obj, "boolean"))
         stop("boolboot requires a boolean object as outputed by boolprep", call.=FALSE)
     if (inherits(obj, "boolboot"))
-        stop("model object already contains bootstrapping results. Halting to prevent data loss", call.=FALSE)        
+        stop("model object already contains bootstrapping results. Halting to prevent data loss", call.=FALSE)
 
     ## A single method has to be specified. Defaults to nlminb
     if (length(method) > 1)
         obj$method <- method[1]
     else
         obj$method <- method
-    
+
     if (!is.null(cluster)) {
         ## Bootstrap the model with parallel cluster.
         bs_closure <- bs_mod(obj, ...)
         Results <- do_parallel(cluster, bs_closure, n, ...)
-        Results <- t(do.call(rbind, Results))
+        print(Results)
+        ## Results <- t(do.call(rbind, Results))
+        par <- sapply(Results, `[[`, "par")
+        conv <- sapply(Results, `[[`, "conv")
+        Results <- list(par=par, conv=conv)
     }
     else {
         ## Bootstrapping without cluster.
         bs_closure <- bs_mod(obj, ...)
-        Results <- sapply(1:n, bs_closure, ...)
+        Results <- lapply(1:n, bs_closure, ...)
+        par <- sapply(Results, `[[`, "par")
+        conv <- sapply(Results, `[[`, "conv")
+        Results <- list(par=par, conv=conv)
     }
 
-    obj[["model.boot"]] <- list(coef=t(Results), samples=n)
+    obj[["model.boot"]] <- list(coef=t(Results$par), conv=Results$conv,
+                                samples=n)
     class(obj) <- c("boolboot", class(obj))
     obj
 }
@@ -84,7 +92,7 @@ boolboot <- function(obj, n=100, method="nlminb", cluster=NULL, ...)
 do_parallel <- function(cluster, fn, n, ...)
 {
     Cluster <- makeCluster(cluster, type="SOCK")
-    clusterSetRNGStream(Cluster)    
+    clusterSetRNGStream(Cluster)
     Results <- clusterApplyLB(Cluster, 1:n, fn, ...)
     stopCluster(Cluster)
     Results
@@ -106,7 +114,7 @@ bs_obj <- function(obj, ...)
     tmp <- bs_sample(obj)
     new.y <- tmp$y
     new.samp <- tmp$samp
-    
+
     for (mod in names(obj$coef.idx)) {
         nam <- colnames(obj$frame[[mod]])
         obj$frame[[mod]] <- new.samp[, obj$coef.idx[[mod]]]
@@ -125,6 +133,7 @@ bs_mod <- function(obj, ...)
         cat("Bootstrap interation:", n, "\n")
         n <<- n+1
         bs_fit <- boolean(bs_obj(obj), ...)
-        bs_fit$model.fit[[1]]$par
+        list(par=bs_fit$model.fit[[1]]$par,
+             conv=bs_fit$model.fit[[1]]$conv)
     }
 }
